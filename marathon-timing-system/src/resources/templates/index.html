@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>马拉松计时成绩管理系统</title>
+    <!-- 引入Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- 引入Font Awesome图标 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- 自定义样式 -->
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+    <!-- 引入Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<!-- 导航栏 -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">
+            <i class="fas fa-running me-2"></i>
+            <strong>马拉松计时成绩管理系统</strong>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#" data-bs-target="dashboard">
+                        <i class="fas fa-tachometer-alt me-1"></i> 控制台
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-bs-target="registration">
+                        <i class="fas fa-user-plus me-1"></i> 运动员注册
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-bs-target="checkpoints">
+                        <i class="fas fa-map-marker-alt me-1"></i> 打卡点管理
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-bs-target="results">
+                        <i class="fas fa-trophy me-1"></i> 成绩查询
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-bs-target="realtime">
+                        <i class="fas fa-clock me-1"></i> 实时监控
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-bs-target="export">
+                        <i class="fas fa-file-export me-1"></i> 数据导出
+                    </a>
+                </li>
+            </ul>
+            <div class="d-flex">
+                    <span class="navbar-text me-3">
+                        <i class="fas fa-user-circle me-1"></i> 管理员
+                    </span>
+                <button class="btn btn-outline-light btn-sm">
+                    <i class="fas fa-sign-out-alt me-1"></i> 退出
+                </button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- 主内容区 -->
+<div class="container-fluid mt-4">
+    <!-- 控制台页面 -->
+    <div id="dashboard" class="page-content">
+        <div class="row">
+            <!-- 统计卡片 -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-primary shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                    已注册运动员</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800" id="athleteCount">0</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-users fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-success shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                    已完成比赛</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800" id="finishedCount">0</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-flag-checkered fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-info shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                    今日打卡记录</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800" id="todayRecords">0</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-list fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-warning shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                    系统状态</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800" id="systemStatus">正常</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-server fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- 实时打卡图表 -->
+            <div class="col-xl-8 col-lg-7">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                        <h6 class="m-0 font-weight-bold text-primary">实时打卡趋势</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-area">
+                            <canvas id="checkpointChart" height="250"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 性别分布 -->
+            <div class="col-xl-4 col-lg-5">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                        <h6 class="m-0 font-weight-bold text-primary">运动员性别分布</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-pie pt-4 pb-2">
+                            <canvas id="genderChart" height="250"></canvas>
+                        </div>
+                        <div class="mt-4 text-center small">
+                                <span class="mr-2">
+                                    <i class="fas fa-circle text-primary"></i> 男性
+                                </span>
+                            <span class="mr-2">
+                                    <i class="fas fa-circle text-success"></i> 女性
+                                </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- 最近打卡记录 -->
+            <div class="col-12">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">最近打卡记录</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="recentRecordsTable" width="100%" cellspacing="0">
+                                <thead>
+                                <tr>
+                                    <th>时间</th>
+                                    <th>运动员</th>
+                                    <th>打卡点</th>
+                                    <th>用时</th>
+                                    <th>状态</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <!-- 动态填充 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 运动员注册页面 -->
+    <div id="registration" class="page-content d-none">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">运动员注册</h6>
+            </div>
+            <div class="card-body">
+                <form id="athleteForm" class="needs-validation" novalidate>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="cardId" class="form-label">RFID卡号 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="cardId" required>
+                            <div class="invalid-feedback">
+                                请输入RFID卡号
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="name" class="form-label">姓名 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" required>
+                            <div class="invalid-feedback">
+                                请输入姓名
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="gender" class="form-label">性别 <span class="text-danger">*</span></label>
+                            <select class="form-select" id="gender" required>
+                                <option value="">请选择</option>
+                                <option value="男">男</option>
+                                <option value="女">女</option>
+                            </select>
+                            <div class="invalid-feedback">
+                                请选择性别
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="age" class="form-label">年龄 <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="age" min="18" max="100" required>
+                            <div class="invalid-feedback">
+                                请输入有效年龄(18-100)
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="idCard" class="form-label">身份证号 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="idCard" required pattern="[0-9Xx]{18}">
+                            <div class="invalid-feedback">
+                                请输入18位身份证号
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="phone" class="form-label">手机号码</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                                <input type="tel" class="form-control" id="phone" pattern="[0-9]{11}">
+                            </div>
+                            <div class="invalid-feedback">
+                                请输入11位手机号码
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="emergencyContact" class="form-label">紧急联系人</label>
+                            <input type="text" class="form-control" id="emergencyContact">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label for="address" class="form-label">联系地址</label>
+                            <textarea class="form-control" id="address" rows="2"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <button type="button" class="btn btn-secondary" id="scanCardBtn">
+                            <i class="fas fa-id-card me-1"></i> 扫描RFID卡
+                        </button>
+                        <div>
+                            <button type="reset" class="btn btn-light me-2">
+                                <i class="fas fa-undo me-1"></i> 重置
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> 注册
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">已注册运动员</h6>
+                <div>
+                    <input type="text" class="form-control form-control-sm" placeholder="搜索..." id="athleteSearch">
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover" id="athletesTable" width="100%" cellspacing="0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>姓名</th>
+                            <th>性别</th>
+                            <th>年龄</th>
+                            <th>RFID卡号</th>
+                            <th>身份证号</th>
+                            <th>操作</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <!-- 动态填充 -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div>显示 <span id="athleteCountDisplay">0</span> 条记录</div>
+                    <nav>
+                        <ul class="pagination pagination-sm" id="athletePagination">
+                            <!-- 分页控件 -->
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 成绩查询页面 -->
+    <div id="results" class="page-content d-none">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">成绩查询</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label for="filterGender" class="form-label">按性别筛选</label>
+                        <select class="form-select" id="filterGender">
+                            <option value="">全部</option>
+                            <option value="男">男</option>
+                            <option value="女">女</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="filterAgeGroup" class="form-label">按年龄组筛选</label>
+                        <select class="form-select" id="filterAgeGroup">
+                            <option value="">全部</option>
+                            <option value="18-30">18-30岁</option>
+                            <option value="31-45">31-45岁</option>
+                            <option value="46-60">46-60岁</option>
+                            <option value="61-100">61岁以上</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="filterRanking" class="form-label">按排名筛选</label>
+                        <select class="form-select" id="filterRanking">
+                            <option value="">全部</option>
+                            <option value="top10">前10名</option>
+                            <option value="top50">前50名</option>
+                            <option value="top100">前100名</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="filterValidity" class="form-label">成绩有效性</label>
+                        <select class="form-select" id="filterValidity">
+                            <option value="">全部</option>
+                            <option value="valid">有效成绩</option>
+                            <option value="invalid">无效成绩</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-end">
+                    <button class="btn btn-primary" onclick="loadResults()">
+                        <i class="fas fa-search me-1"></i> 查询
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">成绩列表</h6>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="exportResults('csv')">
+                        <i class="fas fa-file-csv me-1"></i> 导出CSV
+                    </button>
+                    <button type="button" class="btn btn-outline-success btn-sm" onclick="exportResults('excel')">
+                        <i class="fas fa-file-excel me-1"></i> 导出Excel
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped" id="resultsTable" width="100%" cellspacing="0">
+                        <thead class="table-dark">
+                        <tr>
+                            <th>排名</th>
+                            <th>姓名</th>
+                            <th>性别</th>
+                            <th>年龄</th>
+                            <th>成绩</th>
+                            <th>年龄组排名</th>
+                            <th>性别排名</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <!-- 动态填充 -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div>显示 <span id="resultCountDisplay">0</span> 条记录</div>
+                    <nav>
+                        <ul class="pagination pagination-sm" id="resultPagination">
+                            <!-- 分页控件 -->
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 实时监控页面 -->
+    <div id="realtime" class="page-content d-none">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 bg-success text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-broadcast-tower me-1"></i> 实时监控面板
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <div class="bg-light p-3 rounded">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>系统状态: <span class="badge bg-success" id="systemLiveStatus">运行中</span></span>
+                                <span>最后更新时间: <span id="lastUpdateTime">--:--:--</span></span>
+                            </div>
+                            <div class="progress mb-2" style="height: 10px;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                     role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <div class="d-flex justify-content-between small text-muted">
+                                <span>MQTT连接: <span class="badge bg-success" id="mqttStatus">已连接</span></span>
+                                <span>数据库连接: <span class="badge bg-success" id="dbStatus">正常</span></span>
+                                <span>今日消息: <span id="todayMessages">0</span> 条</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="bg-light p-3 rounded text-center">
+                            <h5 class="text-primary">当前时间</h5>
+                            <h3 id="currentTime" class="font-weight-bold">00:00:00</h3>
+                            <p class="mb-0 small" id="currentDate">0000-00-00</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <h5 class="text-primary mb-3">实时打卡动态</h5>
+                        <div class="position-relative" style="height: 300px; overflow-y: auto;">
+                            <div class="list-group" id="realtimeRecords">
+                                <!-- 动态填充 -->
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">等待数据加载...</h6>
+                                        <small>--:--:--</small>
+                                    </div>
+                                    <p class="mb-1">系统准备就绪</p>
+                                    <small class="text-muted">等待第一条打卡记录</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="sticky-footer bg-white mt-5">
+        <div class="container my-auto">
+            <div class="copyright text-center my-auto">
+                <span>Copyright &copy; 马拉松计时成绩管理系统 2023</span>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<!-- 运动员详情模态框 -->
+<div class="modal fade" id="athleteDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">运动员详细信息</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-4 text-center">
+                        <div class="bg-light p-4 rounded-circle d-inline-flex align-items-center justify-content-center"
+                             style="width: 120px; height: 120px;">
+                            <i class="fas fa-user fa-3x text-secondary"></i>
+                        </div>
+                        <h5 class="mt-3" id="modalAthleteName">--</h5>
+                        <div class="badge bg-primary" id="modalAthleteGender">--</div>
+                        <div class="badge bg-info ms-1" id="modalAthleteAge">--岁</div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <p class="mb-0"><strong>RFID卡号:</strong></p>
+                                <p id="modalCardId">--</p>
+                            </div>
+                            <div class="col-6">
+                                <p class="mb-0"><strong>身份证号:</strong></p>
+                                <p id="modalIdCard">--</p>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <p class="mb-0"><strong>手机号码:</strong></p>
+                                <p id="modalPhone">--</p>
+                            </div>
+                            <div class="col-6">
+                                <p class="mb-0"><strong>紧急联系人:</strong></p>
+                                <p id="modalEmergencyContact">--</p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <p class="mb-0"><strong>联系地址:</strong></p>
+                                <p id="modalAddress">--</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <h6 class="text-primary">比赛记录</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                        <tr>
+                            <th>打卡点</th>
+                            <th>通过时间</th>
+                            <th>用时</th>
+                        </tr>
+                        </thead>
+                        <tbody id="modalRecordsTable">
+                        <tr>
+                            <td colspan="3" class="text-center">暂无记录</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" onclick="sendResultSms()">
+                    <i class="fas fa-sms me-1"></i> 发送成绩短信
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 加载脚本 -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/app.js}"></script>
+</body>
+</html>
