@@ -1,1 +1,0 @@
-# marathon-timing-system
